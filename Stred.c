@@ -57,16 +57,12 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 {
 	char buff[BUFF_SIZE + 7];
 	int ret;
-//	char func[BUFF_SIZE + 7]; //jer je najduza mogucnost string= ili append= i jos 100 karaktera
 
 	ret = copy_from_user(buff, buffer, length);
 	if(ret)
 		return -EFAULT;
 	buff[length-1] = '\0';
 
-//	ret = sscanf(buff, "%s", func);
-//	if (ret != 1)
-//		printk("Pogresna komanda\n");
 		
 	if (strstr(buff, "string=")== buff)
 	{
@@ -128,8 +124,46 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	}
 	else if (strstr(buff, "remove=")== buff)
 	{
+		int ret;
+		int j = 0;
+		char *ps = buff + 7;
+		char brisanje[BUFF_SIZE];
+		int duzina_br = 0;
+		char *found;
+		
+		ret = sscanf(ps, "%s", brisanje);
+		
+		if (ret == 1)
+		{
+		while(brisanje[j] != 0)
+		{
+			duzina_br++;
+			j++;
+		}
+		brisanje[duzina_br] = 0;
 
-	}
+			found = strstr(string, brisanje);
+			if (found)
+			{
+				while(found)
+				{
+					strncpy(found, found + duzina_br, strlen(found) - duzina_br); 
+					found = strstr(string, brisanje);
+					for (j = 1; j <= duzina_br; j++)
+						string[strlen(string)-1] = 0;
+					printk(KERN_WARNING "Izbrisan string %s iz pocetnog, sada je: %s\n",brisanje, string);
+				}
+				printk(KERN_WARNING "Uspesno obrisano. Novi string je: %s\n", string);
+			}
+			else
+
+				printk(KERN_WARNING "Nema trazenog stringa u pocetnom\n");
+		}
+		else
+		{
+			printk(KERN_WARNING "Pogresno uneta komanda\n");
+		}
+	} 
 	else 
 	{
 		printk(KERN_WARNING "Pogresno uneta komanda\n");
