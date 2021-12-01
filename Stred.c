@@ -18,6 +18,9 @@ static struct class *my_class;
 static struct device *my_device;
 static struct cdev *my_cdev;
 
+char string[BUFF_SIZE];
+int endRead = 0;
+
 int stred_open(struct inode *pinode, struct file *pfile);
 int stred_close(struct inode *pinode, struct file *pfile);
 ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset);
@@ -52,8 +55,80 @@ ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_
 
 ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset)
 {
-		printk(KERN_INFO "Succesfully wrote into file\n");
-		return length;
+	char buff[BUFF_SIZE];
+	int ret;
+	char func[BUFF_SIZE + 7]; //jer je najduza mogucnost string= ili append= i jos 100 karaktera
+
+	ret = copy_from_user(buff, buffer, length);
+	if(ret)
+		return -EFAULT;
+	buff[length-1] = '\0';
+
+	ret = sscanf(buff, "%s", func);	
+
+	//char *part1;
+	//char str[BUFF_SIZE];
+
+	//part1 = strpbrk(func, "string=");
+	//if (part1)
+	//{
+	//	strncpy(str,&func[7],strlen(func)-7);
+	//}
+	//else 
+	
+	if (strstr(func, "string=")== func)
+	{
+		char *ps = func + 7;
+		strncpy(string, ps, strlen(func)-7);
+		printk(KERN_WARNING "Upis stringa %s\n", string);
+	}
+	else if (strstr(func, "append=")== func)
+	{	
+		char *ps = func + 7;
+		strncat(string, ps, strlen(func)-7);
+		printk(KERN_WARNING "Dodat na kraj string %s\n", ps);
+	}
+	else if(!strcmp(func, "clear"))
+	{
+		int i;
+		for (i = 0; i < BUFF_SIZE; i++)
+			string[i] = 0;
+		
+		printk(KERN_WARNING "Uspesno obrisan string\n");
+	}
+	else if(!strcmp(func, "shrink"))
+	{
+
+	}
+	else if (strstr(func, "truncate=")== func)
+	{
+		char *ps = func + 9;
+		int ret1;
+		int brisanje;
+		ret1 = sscanf(ps,"%d",&brisanje);
+	       if (ret1 == 1)	
+	       {
+		       int i;
+			for (i = 0; i < brisanje; i++)
+				string[strlen(string)-i] = 0;
+			
+			printk(KERN_WARNING "Izmenjen string string je: %s\n", string);
+	       }
+	       else
+	       {
+			printk(KERN_WARNING "Pogresno uneta komanda\n");
+	       }
+	}
+	else if (strstr(func, "remove=")== func)
+	{
+
+	}
+	else 
+	{
+		printk(KERN_WARNING "Pogresno uneta komanda\n");
+	}
+
+	return length;
 }
 
 static int __init stred_init(void)
