@@ -18,7 +18,45 @@ static struct class *my_class;
 static struct device *my_device;
 static struct cdev *my_cdev;
 
-static int __init storage_init(void)
+int stred_open(struct inode *pinode, struct file *pfile);
+int stred_close(struct inode *pinode, struct file *pfile);
+ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset);
+ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset);
+
+struct file_operations my_fops =
+{
+	.owner = THIS_MODULE,
+	.open = stred_open,
+	.read = stred_read,
+	.write = stred_write,
+	.release = stred_close,
+};
+
+int stred_open(struct inode *pinode, struct file *pfile)
+{
+		printk(KERN_INFO "Succesfully opened file\n");
+		return 0;
+}
+
+int stred_close(struct inode *pinode, struct file *pfile)
+{
+		printk(KERN_INFO "Succesfully closed file\n");
+		return 0;
+}
+
+ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset)
+{
+		printk(KERN_INFO "Succesfully read from file\n");
+		return 0;
+}
+
+ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset)
+{
+		printk(KERN_INFO "Succesfully wrote into file\n");
+		return length;
+}
+
+static int __init stred_init(void)
 {
    int ret = 0;
 
