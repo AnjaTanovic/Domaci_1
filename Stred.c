@@ -55,40 +55,32 @@ ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_
 
 ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset)
 {
-	char buff[BUFF_SIZE];
+	char buff[BUFF_SIZE + 7];
 	int ret;
-	char func[BUFF_SIZE + 7]; //jer je najduza mogucnost string= ili append= i jos 100 karaktera
+//	char func[BUFF_SIZE + 7]; //jer je najduza mogucnost string= ili append= i jos 100 karaktera
 
 	ret = copy_from_user(buff, buffer, length);
 	if(ret)
 		return -EFAULT;
 	buff[length-1] = '\0';
 
-	ret = sscanf(buff, "%s", func);	
-
-	//char *part1;
-	//char str[BUFF_SIZE];
-
-	//part1 = strpbrk(func, "string=");
-	//if (part1)
-	//{
-	//	strncpy(str,&func[7],strlen(func)-7);
-	//}
-	//else 
-	
-	if (strstr(func, "string=")== func)
+//	ret = sscanf(buff, "%s", func);
+//	if (ret != 1)
+//		printk("Pogresna komanda\n");
+		
+	if (strstr(buff, "string=")== buff)
 	{
-		char *ps = func + 7;
-		strncpy(string, ps, strlen(func)-7);
+		char *ps = buff + 7;
+		strncpy(string, ps, strlen(buff)-7);
 		printk(KERN_WARNING "Upis stringa %s\n", string);
 	}
-	else if (strstr(func, "append=")== func)
+	else if (strstr(buff, "append=")== buff)
 	{	
-		char *ps = func + 7;
-		strncat(string, ps, strlen(func)-7);
+		char *ps = buff + 7;
+		strncat(string, ps, strlen(buff)-7);
 		printk(KERN_WARNING "Dodat na kraj string %s\n", ps);
 	}
-	else if(!strcmp(func, "clear"))
+	else if(!strcmp(buff, "clear"))
 	{
 		int i;
 		for (i = 0; i < BUFF_SIZE; i++)
@@ -96,13 +88,28 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		
 		printk(KERN_WARNING "Uspesno obrisan string\n");
 	}
-	else if(!strcmp(func, "shrink"))
+	else if(!strcmp(buff, "shrink"))
 	{
+		char *ps = string;
+		int broj_raz = 0; //broji samo za prvi while, jer je za njih potrebno prebrisati
+		while (string[0] == ' ')
+		{
+			broj_raz ++;
+			ps = string + 1; //pomeri se na sledeci i prekopira u string bez ' ' 
+			strncpy(string, ps, strlen(string)-1);
+			string[strlen(string)-1] = 0;
+		}	
 
+		while (string[strlen(string)-1] == ' ')
+		{
+			string[strlen(string)-1] = 0;
+		}
+
+		printk(KERN_WARNING "Novi string je sada: %s\n", string);
 	}
-	else if (strstr(func, "truncate=")== func)
+	else if (strstr(buff, "truncate=")== buff)
 	{
-		char *ps = func + 9;
+		char *ps = buff + 9;
 		int ret1;
 		int brisanje;
 		ret1 = sscanf(ps,"%d",&brisanje);
@@ -119,7 +126,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 			printk(KERN_WARNING "Pogresno uneta komanda\n");
 	       }
 	}
-	else if (strstr(func, "remove=")== func)
+	else if (strstr(buff, "remove=")== buff)
 	{
 
 	}
