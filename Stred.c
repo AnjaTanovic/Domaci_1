@@ -60,7 +60,7 @@ ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_
 		printk(KERN_INFO "Succesfully read\n");
 		return 0;
 	}
-	len = snprintf(buff,BUFF_SIZE , "String u baferu je: %s\n", string);
+	len = scnprintf(buff,BUFF_SIZE , "String u baferu je: %s\n", string);
 	ret = copy_to_user(buffer, buff, len);
 	if(ret)
 		return -EFAULT;
