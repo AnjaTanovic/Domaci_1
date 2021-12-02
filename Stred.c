@@ -19,6 +19,7 @@ static struct device *my_device;
 static struct cdev *my_cdev;
 
 char string[BUFF_SIZE];
+int pos = 0;
 int endRead = 0;
 
 int stred_open(struct inode *pinode, struct file *pfile);
@@ -49,8 +50,25 @@ int stred_close(struct inode *pinode, struct file *pfile)
 
 ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset)
 {
-		printk(KERN_INFO "Succesfully read from file\n");
+	int ret;
+	char buff[BUFF_SIZE];
+	long int len;
+	
+	if (endRead){
+		endRead = 0;
+	//	pos = 0;
+		printk(KERN_INFO "Succesfully read\n");
 		return 0;
+	}
+	len = snprintf(buff,BUFF_SIZE , "String u baferu je: %s\n", string);
+	ret = copy_to_user(buffer, buff, len);
+	if(ret)
+		return -EFAULT;
+//	pos ++;
+//	if (pos == strlen(string)) {
+		endRead = 1;
+//	}
+	return len;
 }
 
 ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset)
@@ -66,7 +84,13 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		
 	if (strstr(buff, "string=")== buff)
 	{
+
 		char *ps = buff + 7;
+		//da prebrise sve clanove da ne bi se desilo da ostanu neki stari karakteri
+		int i;
+		for (i = 0; i < BUFF_SIZE; i++)
+			string[i] = 0;
+
 		strncpy(string, ps, strlen(buff)-7);
 		printk(KERN_WARNING "Upis stringa %s\n", string);
 	}
