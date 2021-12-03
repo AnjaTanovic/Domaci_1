@@ -19,6 +19,9 @@ static struct class *my_class;
 static struct device *my_device;
 static struct cdev *my_cdev;
 
+DECLARE_WAIT_QUEUE_HEAD(readQ);
+DECLARE_WAIT_QUEUE_HEAD(writeQ);
+
 char string[STRING_SIZE];
 int size = 0; //koliko clanova se trenutno nalazi u nizu
 int endRead = 0;
@@ -60,11 +63,15 @@ ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_
 		printk(KERN_INFO "Succesfully read\n");
 		return 0;
 	}
+
+	if (wait_event_interruptible(readQ,(size > 0)))
+		return -ERESTARTSYS;
+
 	len = scnprintf(buff,STRING_SIZE , "String u baferu je: %s\n", string);
 	ret = copy_to_user(buffer, buff, len);
 	if(ret)
 		return -EFAULT;
-
+	
 	endRead = 1;
 	return len;
 }
@@ -79,7 +86,9 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		return -EFAULT;
 	buff[length-1] = '\0';
 
-		
+//	if (wait_event_interruptible(writeQ,(size < 100)))
+//		return -ERESTARTSYS;
+
 	if (strstr(buff, "string=")== buff)
 	{
 
@@ -100,23 +109,32 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		else
 		{
 			printk(KERN_WARNING "Ne moze se upisati string koji je veci od 100 karaktera\n");
-		}	
+		}
+		
+
+		wake_up_interruptible(&readQ);
+		wake_up_interruptible(&writeQ);
+		//nije pisala u zadatku da je za oslobadjanje, ali moze biti ako je novi string kratak
 	}
 	else if (strstr(buff, "append=")== buff)
 	{
 	//NE RADI ZA SLUCAJ KAD CE BITI TACNO 100	
+
 		char *ps = buff + 7;
 		int new_size = strlen(ps);
-		if ((size + new_size) >  100)
-		{
-			printk(KERN_WARNING "Ne moze se upisati string koji je veci od 100 karaktera\n");
-		}
-		else
-		{
-			strcat(string, ps);
-			printk(KERN_WARNING "Novi string je sad %s\n", string );
-		}
+		
+		printk(KERN_WARNING "Size je %d, a new size je %d\n", size, new_size);
+	
+		if(wait_event_interruptible(writeQ,(size + new_size < 100)))
+			return -ERESTARTSYS;
+
+		strcat(string, ps);
+		printk(KERN_WARNING "Novi string je sad %s\n", string );
+
 		size = strlen(string);
+
+		wake_up_interruptible(&readQ);
+
 	}
 	else if(!strcmp(buff, "clear"))
 	{
@@ -126,6 +144,8 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	
 		size = 0;	
 		printk(KERN_WARNING "Uspesno obrisan string\n");
+
+		wake_up_interruptible(&writeQ);
 	}
 	else if(!strcmp(buff, "shrink"))
 	{
@@ -146,6 +166,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		}
 
 		printk(KERN_WARNING "Novi string je sada: %s\n", string);
+		wake_up_interruptible(&writeQ);
 	}
 	else if (strstr(buff, "truncate=")== buff)
 	{
@@ -161,6 +182,8 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 				string[strlen(string)-1] = 0;
 
 			printk(KERN_WARNING "Izmenjen string string je: %s\n", string);
+
+	      		wake_up_interruptible(&writeQ);
 	       }
 	       else
 	       {
@@ -203,16 +226,19 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 					broj_brisanja++;
 				}
 				printk(KERN_WARNING "Uspesno obrisano. Novi string je: %s\n", string);
+		
+			size = size - duzina_br * broj_brisanja;
+
+			wake_up_interruptible(&writeQ);
 			}
 			else
-
 				printk(KERN_WARNING "Nema trazenog stringa u pocetnom\n");
-			size = size - duzina_br * broj_brisanja;
 		}
 		else
 		{
 			printk(KERN_WARNING "Pogresno uneta komanda\n");
 		}
+
 	} 
 	else 
 	{
