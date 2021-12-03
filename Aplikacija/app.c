@@ -6,7 +6,6 @@ int main ()
 {
 	FILE* fp;
 	char option;
-	char *str;
 	size_t num_of_bytes = 100;
 
 	while(1)
@@ -20,7 +19,10 @@ int main ()
 		printf("7: Izbriši poslednjih n karaktera iz stringa\n");
 
 		scanf("%c",&option);
-		
+		usleep(1);
+	
+		char *str;
+	
 		switch (option)
 		{
 			case '1':
@@ -30,7 +32,8 @@ int main ()
 					puts("Problem pri otvaranju /dev/stred\n");
 					return -1;
 				}
-				str = (char *)malloc(num_of_bytes+1);		
+
+				str = (char *)malloc(num_of_bytes);		
 				getline(&str, &num_of_bytes, fp);
 
 				if(fclose(fp))
@@ -39,7 +42,7 @@ int main ()
 					return -1;
 				}
 
-				printf("String je: %s\n", str);
+				printf("%s\n", str);
 				
 				free(str);
 				
@@ -55,9 +58,8 @@ int main ()
 				printf("String koji zelite da unesete: ");
 				
 				str = (char *)malloc(num_of_bytes+1);		
-				scanf("%s", str);
+				scanf("%s\n", str);
 		
-				printf("String je: %s\n", str);
 				fprintf(fp,"string=%s\n", str);
 
 				if(fclose(fp))
@@ -69,19 +71,109 @@ int main ()
 				free(str);
 				break;
 			case '3':
+				fp = fopen("/dev/stred", "w");
+				if(fp == NULL)
+				{
+					printf("Problem pri otvaranju /dev/stred\n");
+					return -1;
+				}
 
+				printf("String koji zelite da konkatanirate: ");
+				
+				str = (char *)malloc(num_of_bytes+1);		
+				scanf("%s", str);
+		
+				fprintf(fp,"append=%s\n", str);
+
+				if(fclose(fp))
+				{
+					printf("Problem pri zatvaranju /dev/led\n");
+					return -1;
+				}
+				
+				free(str);
 				break;
 			case '4':
-
+				fp = fopen("/dev/stred", "w");
+				if(fp == NULL)
+				{
+					printf("Problem pri otvaranju /dev/stred\n");
+					return -1;
+				}
+					
+				fputs("clear\n", fp);
+			
+				if(fclose(fp))
+				{
+					printf("Problem pri zatvaranju /dev/led\n");
+					return -1;
+				}
+				
 				break;
 			case '5':
-
+				fp = fopen("/dev/stred", "w");
+				if(fp == NULL)
+				{
+					printf("Problem pri otvaranju /dev/stred\n");
+					return -1;
+				}
+					
+				fputs("shrink\n", fp);
+			
+				if(fclose(fp))
+				{
+					printf("Problem pri zatvaranju /dev/led\n");
+					return -1;
+				}
+				
 				break;
 			case '6':
+				fp = fopen("/dev/stred", "w");
+				if(fp == NULL)
+				{
+					printf("Problem pri otvaranju /dev/stred\n");
+					return -1;
+				}
 
+				printf("String koji zelite da izbrisete: ");
+				
+				str = (char *)malloc(num_of_bytes+1);		
+				scanf("%s\n", str);
+		
+				fprintf(fp,"remove=%s\n", str);
+
+				if(fclose(fp))
+				{
+					printf("Problem pri zatvaranju /dev/led\n");
+					return -1;
+				}
+				
+				free(str);
+				
 				break;
 			case '7':
+				fp = fopen("/dev/stred", "w");
+				if(fp == NULL)
+				{
+					printf("Problem pri otvaranju /dev/stred\n");
+					return -1;
+				}
 
+				printf("Koliko karaktera brisete: ");
+				
+				str = (char *)malloc(num_of_bytes+1);		
+				scanf("%s\n", str);
+		
+				fprintf(fp,"truncate=%s\n", str);
+
+				if(fclose(fp))
+				{
+					printf("Problem pri zatvaranju /dev/led\n");
+					return -1;
+				}
+				
+				free(str);
+				
 				break;
 			case 'Q':
 				printf("Kraj aplikacije\n");
