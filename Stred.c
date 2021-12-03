@@ -9,7 +9,8 @@
 #include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/errno.h>
-#define BUFF_SIZE 100
+#define STRING_SIZE 100
+#define PRIJEMNI_BUFF 200
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -18,8 +19,8 @@ static struct class *my_class;
 static struct device *my_device;
 static struct cdev *my_cdev;
 
-char string[BUFF_SIZE];
-int pos = 0;
+char string[STRING_SIZE];
+int size = 0; //koliko clanova se trenutno nalazi u nizu
 int endRead = 0;
 
 int stred_open(struct inode *pinode, struct file *pfile);
@@ -51,29 +52,26 @@ int stred_close(struct inode *pinode, struct file *pfile)
 ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_t *offset)
 {
 	int ret;
-	char buff[BUFF_SIZE];
+	char buff[STRING_SIZE];
 	long int len;
 	
 	if (endRead){
 		endRead = 0;
-	//	pos = 0;
 		printk(KERN_INFO "Succesfully read\n");
 		return 0;
 	}
-	len = scnprintf(buff,BUFF_SIZE , "String u baferu je: %s\n", string);
+	len = scnprintf(buff,STRING_SIZE , "String u baferu je: %s\n", string);
 	ret = copy_to_user(buffer, buff, len);
 	if(ret)
 		return -EFAULT;
-//	pos ++;
-//	if (pos == strlen(string)) {
-		endRead = 1;
-//	}
+
+	endRead = 1;
 	return len;
 }
 
 ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length, loff_t *offset)
 {
-	char buff[BUFF_SIZE + 7];
+	char buff[PRIJEMNI_BUFF];
 	int ret;
 
 	ret = copy_from_user(buff, buffer, length);
@@ -88,33 +86,54 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		char *ps = buff + 7;
 		//da prebrise sve clanove da ne bi se desilo da ostanu neki stari karakteri
 		int i;
-		for (i = 0; i < BUFF_SIZE; i++)
+		for (i = 0; i < STRING_SIZE; i++)
 			string[i] = 0;
 
-		strncpy(string, ps, strlen(buff)-7);
-		printk(KERN_WARNING "Upis stringa %s\n", string);
+		if (strlen(ps) <= 100)
+		{
+			size = strlen(ps);
+
+			strncpy(string, ps, size);
+			printk(KERN_WARNING "Upis stringa %s\n", string);
+	
+		}
+		else
+		{
+			printk(KERN_WARNING "Ne moze se upisati string koji je veci od 100 karaktera\n");
+		}	
 	}
 	else if (strstr(buff, "append=")== buff)
-	{	
+	{
+	//NE RADI ZA SLUCAJ KAD CE BITI TACNO 100	
 		char *ps = buff + 7;
-		strncat(string, ps, strlen(buff)-7);
-		printk(KERN_WARNING "Dodat na kraj string %s\n", ps);
+		int new_size = strlen(ps);
+		if ((size + new_size) >  100)
+		{
+			printk(KERN_WARNING "Ne moze se upisati string koji je veci od 100 karaktera\n");
+		}
+		else
+		{
+			strcat(string, ps);
+			printk(KERN_WARNING "Novi string je sad %s\n", string );
+		}
+		size = strlen(string);
 	}
 	else if(!strcmp(buff, "clear"))
 	{
 		int i;
-		for (i = 0; i < BUFF_SIZE; i++)
+		for (i = 0; i < STRING_SIZE; i++)
 			string[i] = 0;
-		
+	
+		size = 0;	
 		printk(KERN_WARNING "Uspesno obrisan string\n");
 	}
 	else if(!strcmp(buff, "shrink"))
 	{
 		char *ps = string;
-		int broj_raz = 0; //broji samo za prvi while, jer je za njih potrebno prebrisati
+		
 		while (string[0] == ' ')
 		{
-			broj_raz ++;
+			size--;
 			ps = string + 1; //pomeri se na sledeci i prekopira u string bez ' ' 
 			strncpy(string, ps, strlen(string)-1);
 			string[strlen(string)-1] = 0;
@@ -122,6 +141,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 
 		while (string[strlen(string)-1] == ' ')
 		{
+			size--;
 			string[strlen(string)-1] = 0;
 		}
 
@@ -133,27 +153,31 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		int ret1;
 		int brisanje;
 		ret1 = sscanf(ps,"%d",&brisanje);
-	       if (ret1 == 1)	
+	       
+		if (ret1 == 1)	
 	       {
 		       int i;
 			for (i = 0; i < brisanje; i++)
-				string[strlen(string)-i] = 0;
-			
+				string[strlen(string)-1] = 0;
+
 			printk(KERN_WARNING "Izmenjen string string je: %s\n", string);
 	       }
 	       else
 	       {
 			printk(KERN_WARNING "Pogresno uneta komanda\n");
 	       }
+	       size = size - brisanje;
 	}
 	else if (strstr(buff, "remove=")== buff)
 	{
+		//NE RADI DOBRO POPRAVITI
 		int ret;
 		int j = 0;
 		char *ps = buff + 7;
-		char brisanje[BUFF_SIZE];
+		char brisanje[PRIJEMNI_BUFF];
 		int duzina_br = 0;
 		char *found;
+		int broj_brisanja = 0;
 		
 		ret = sscanf(ps, "%s", brisanje);
 		
@@ -176,12 +200,14 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 					for (j = 1; j <= duzina_br; j++)
 						string[strlen(string)-1] = 0;
 					printk(KERN_WARNING "Izbrisan string %s iz pocetnog, sada je: %s\n",brisanje, string);
+					broj_brisanja++;
 				}
 				printk(KERN_WARNING "Uspesno obrisano. Novi string je: %s\n", string);
 			}
 			else
 
 				printk(KERN_WARNING "Nema trazenog stringa u pocetnom\n");
+			size = size - duzina_br * broj_brisanja;
 		}
 		else
 		{
@@ -192,6 +218,8 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	{
 		printk(KERN_WARNING "Pogresno uneta komanda\n");
 	}
+	//OBRISATI
+	printk(KERN_WARNING "SIZE = %d", size);
 
 	return length;
 }
@@ -199,6 +227,12 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 static int __init stred_init(void)
 {
    int ret = 0;
+
+   //Init string
+   int i;
+   for (i = 0; i < STRING_SIZE; i++)
+	   string[i] = 0;
+
 
    ret = alloc_chrdev_region(&my_dev_id, 0, 1, "stred");
    if (ret){
