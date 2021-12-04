@@ -57,9 +57,10 @@ int main ()
 
 				printf("String koji zelite da unesete: ");
 				
-				str = (char *)malloc(num_of_bytes+1);		
-				scanf("%s", str);
-		
+				str = (char *)malloc(num_of_bytes+1);
+				scanf("\n");
+				scanf("%[^\n]%*c", str);
+
 				fprintf(fp,"string=%s\n", str);
 
 				if(fclose(fp))
@@ -81,7 +82,8 @@ int main ()
 				printf("String koji zelite da konkatanirate: ");
 				
 				str = (char *)malloc(num_of_bytes+1);		
-				scanf("%s", str);
+				scanf("\n");
+				scanf("%[^\n]%*c", str);
 		
 				fprintf(fp,"append=%s\n", str);
 
@@ -139,7 +141,7 @@ int main ()
 				
 				str = (char *)malloc(num_of_bytes+1);		
 				scanf("%s", str);
-		
+
 				fprintf(fp,"remove=%s\n", str);
 
 				if(fclose(fp))
