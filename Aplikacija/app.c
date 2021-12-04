@@ -140,8 +140,9 @@ int main ()
 				printf("String koji zelite da izbrisete: ");
 				
 				str = (char *)malloc(num_of_bytes+1);		
-				scanf("%s", str);
-
+				scanf("\n");
+				scanf("%[^\n]%*c", str);
+				
 				fprintf(fp,"remove=%s\n", str);
 
 				if(fclose(fp))
