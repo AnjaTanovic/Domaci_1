@@ -19,7 +19,7 @@ int main ()
 		printf("7: Izbriši poslednjih n karaktera iz stringa\n");
 
 		scanf("%c",&option);
-		usleep(1);
+		usleep(10);
 	
 		char *str;
 	
@@ -34,7 +34,7 @@ int main ()
 				}
 
 				str = (char *)malloc(num_of_bytes);		
-				getline(&str, &num_of_bytes, fp);
+				getdelim(&str, &num_of_bytes, (int)'\0', fp);
 
 				if(fclose(fp))
 				{
@@ -58,7 +58,7 @@ int main ()
 				printf("String koji zelite da unesete: ");
 				
 				str = (char *)malloc(num_of_bytes+1);		
-				scanf("%s\n", str);
+				scanf("%s", str);
 		
 				fprintf(fp,"string=%s\n", str);
 
@@ -138,7 +138,7 @@ int main ()
 				printf("String koji zelite da izbrisete: ");
 				
 				str = (char *)malloc(num_of_bytes+1);		
-				scanf("%s\n", str);
+				scanf("%s", str);
 		
 				fprintf(fp,"remove=%s\n", str);
 
@@ -162,7 +162,7 @@ int main ()
 				printf("Koliko karaktera brisete: ");
 				
 				str = (char *)malloc(num_of_bytes+1);		
-				scanf("%s\n", str);
+				scanf("%s", str);
 		
 				fprintf(fp,"truncate=%s\n", str);
 
