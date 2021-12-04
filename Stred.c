@@ -67,7 +67,7 @@ ssize_t stred_read(struct file *pfile, char __user *buffer, size_t length, loff_
 	if (wait_event_interruptible(readQ,(size > 0)))
 		return -ERESTARTSYS;
 
-	len = scnprintf(buff,STRING_SIZE , "String u baferu je: %s\n", string);
+	len = scnprintf(buff,STRING_SIZE , "\nString u baferu je: %s\n\n", string);
 	ret = copy_to_user(buffer, buff, len);
 	if(ret)
 		return -EFAULT;
@@ -85,9 +85,6 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	if(ret)
 		return -EFAULT;
 	buff[length-1] = '\0';
-
-//	if (wait_event_interruptible(writeQ,(size < 100)))
-//		return -ERESTARTSYS;
 
 	if (strstr(buff, "string=")== buff)
 	{
@@ -114,22 +111,17 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 
 		wake_up_interruptible(&readQ);
 		wake_up_interruptible(&writeQ);
-		//nije pisala u zadatku da je za oslobadjanje, ali moze biti ako je novi string kratak
 	}
 	else if (strstr(buff, "append=")== buff)
 	{
-	//NE RADI ZA SLUCAJ KAD CE BITI TACNO 100	
-
 		char *ps = buff + 7;
 		int new_size = strlen(ps);
 		
-		printk(KERN_WARNING "Size je %d, a new size je %d\n", size, new_size);
-	
-		if(wait_event_interruptible(writeQ,(size + new_size < 100)))
+		if(wait_event_interruptible(writeQ,(size + new_size <= 100)))
 			return -ERESTARTSYS;
 
 		strcat(string, ps);
-		printk(KERN_WARNING "Novi string je sad %s\n", string );
+		printk(KERN_WARNING "Novi string je sad: %s\n", string );
 
 		size = strlen(string);
 
@@ -176,24 +168,28 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		ret1 = sscanf(ps,"%d",&brisanje);
 	       
 		if (ret1 == 1)	
-	       {
-		       int i;
+	       { 
+		        int i;
+		        if (brisanje > size) 
+				brisanje = size;
+
 			for (i = 0; i < brisanje; i++)
-				string[strlen(string)-1] = 0;
-
+			{
+				string[size-1] = 0;
+				size--;
+			}
+			
 			printk(KERN_WARNING "Izmenjen string string je: %s\n", string);
-
-	      		wake_up_interruptible(&writeQ);
+	      		
+			wake_up_interruptible(&writeQ);
 	       }
 	       else
 	       {
 			printk(KERN_WARNING "Pogresno uneta komanda\n");
 	       }
-	       size = size - brisanje;
 	}
 	else if (strstr(buff, "remove=")== buff)
 	{
-		//NE RADI DOBRO POPRAVITI
 		int ret;
 		int j = 0;
 		char *ps = buff + 7;
@@ -254,7 +250,7 @@ static int __init stred_init(void)
 {
    int ret = 0;
 
-   //Init string
+   //Inicijalizacija string
    int i;
    for (i = 0; i < STRING_SIZE; i++)
 	   string[i] = 0;
