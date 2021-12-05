@@ -1,0 +1,1 @@
+cmd_/home/anjat/GIT/Domaci_1/Drajver/Stred.ko := ld -r -m elf_i386 -T ./scripts/module-common.lds --build-id  -o /home/anjat/GIT/Domaci_1/Drajver/Stred.ko /home/anjat/GIT/Domaci_1/Drajver/Stred.o /home/anjat/GIT/Domaci_1/Drajver/Stred.mod.o ;  true
