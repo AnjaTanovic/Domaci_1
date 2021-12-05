@@ -4,8 +4,8 @@
 
 int main ()
 {
-	FILE* fp;
-	char option;
+	FILE *fp;
+	char *option;
 	size_t num_of_bytes = 100;
 
 	while(1)
@@ -18,12 +18,13 @@ int main ()
 		printf("6: Izbriši izraz iz stringa\n");
 		printf("7: Izbriši poslednjih n karaktera iz stringa\n");
 
-		scanf("%c",&option);
-		usleep(10);
-	
+		size_t num_b = 1;
+		option = (char*) malloc(num_b+1);
+		getline(&option,&num_b, stdin);
+
 		char *str;
 	
-		switch (option)
+		switch (*option)
 		{
 			case '1':
 				fp = fopen ("/dev/stred", "r");
@@ -41,9 +42,8 @@ int main ()
 					puts("Problem pri zatvaranju /dev/stred\n");
 					return -1;
 				}
-
-				printf("%s\n", str);
-				
+			
+				printf("%s",str);	
 				free(str);
 				
 				break;
@@ -127,7 +127,6 @@ int main ()
 					printf("Problem pri zatvaranju /dev/led\n");
 					return -1;
 				}
-				
 				break;
 			case '6':
 				fp = fopen("/dev/stred", "w");
