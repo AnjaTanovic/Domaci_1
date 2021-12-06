@@ -130,8 +130,6 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 			if(down_interruptible(&sem))
 				return -ERESTARTSYS;
 		}		
-	//	if(wait_event_interruptible(writeQ,(size + new_size <= 100)))
-	//		return -ERESTARTSYS;
 
 		strcat(string, ps);
 		printk(KERN_WARNING "Novi string je sad: %s\n", string );
@@ -239,7 +237,7 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 	{
 		printk(KERN_WARNING "Pogresno uneta komanda\n");
 	}
-	//OBRISATI
+	//Ispis koliko trenutno ima karaktera u baferu radi lakseg testiranja
 	printk(KERN_WARNING "SIZE = %d", size);
 
 	return length;
@@ -247,36 +245,38 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 
 static int __init stred_init(void)
 {
-   int ret = 0;
+	int ret = 0;
 
-   //Inicijalizacija string
-   int i;
-   for (i = 0; i < STRING_SIZE; i++)
-	   string[i] = 0;
+	//Inicijalizacija string
 
-   //Inicijalizacija semafora
-   sema_init(&sem,1);
+	int i;
 
-   ret = alloc_chrdev_region(&my_dev_id, 0, 1, "stred");
-   if (ret){
-      printk(KERN_ERR "failed to register char device\n");
-      return ret;
-   }
-   printk(KERN_INFO "char device region allocated\n");
+	for (i = 0; i < STRING_SIZE; i++)
+		string[i] = 0;
 
-   my_class = class_create(THIS_MODULE, "stred_class");
-   if (my_class == NULL){
-      printk(KERN_ERR "failed to create class\n");
-      goto fail_0;
-   }
-   printk(KERN_INFO "class created\n");
+	//Inicijalizacija semafora
+	sema_init(&sem,1);
+
+	ret = alloc_chrdev_region(&my_dev_id, 0, 1, "stred");
+   	if (ret){
+      		printk(KERN_ERR "failed to register char device\n");
+      	return ret;
+  	}
+  	printk(KERN_INFO "char device region allocated\n");
+
+   	my_class = class_create(THIS_MODULE, "stred_class");
+   	if (my_class == NULL){
+      		printk(KERN_ERR "failed to create class\n");
+      		goto fail_0;
+   	}
+   	printk(KERN_INFO "class created\n");
    
-   my_device = device_create(my_class, NULL, my_dev_id, NULL, "stred");
-   if (my_device == NULL){
-      printk(KERN_ERR "failed to create device\n");
-      goto fail_1;
-   }
-   printk(KERN_INFO "device created\n");
+   	my_device = device_create(my_class, NULL, my_dev_id, NULL, "stred");
+   	if (my_device == NULL){
+      		printk(KERN_ERR "failed to create device\n");
+      		goto fail_1;
+   	}
+  	printk(KERN_INFO "device created\n");
 
 	my_cdev = cdev_alloc();	
 	my_cdev->ops = &my_fops;
@@ -284,31 +284,31 @@ static int __init stred_init(void)
 	ret = cdev_add(my_cdev, my_dev_id, 1);
 	if (ret)
 	{
-      printk(KERN_ERR "failed to add cdev\n");
+      		printk(KERN_ERR "failed to add cdev\n");
 		goto fail_2;
 	}
-   printk(KERN_INFO "cdev added\n");
-   printk(KERN_INFO "Driver insmoded\n");
+   	printk(KERN_INFO "cdev added\n");
+   	printk(KERN_INFO "Driver insmoded\n");
 
-   return 0;
+   	return 0;
 
-   fail_2:
-      device_destroy(my_class, my_dev_id);
-   fail_1:
-      class_destroy(my_class);
-   fail_0:
-      unregister_chrdev_region(my_dev_id, 1);
-   return -1;
+   	fail_2:
+      		device_destroy(my_class, my_dev_id);
+   	fail_1:
+      		class_destroy(my_class);
+   	fail_0:
+      		unregister_chrdev_region(my_dev_id, 1);
+   	return -1;
 }
 
 
 static void __exit stred_exit(void)
 {
-   cdev_del(my_cdev);
-   device_destroy(my_class, my_dev_id);
-   class_destroy(my_class);
-   unregister_chrdev_region(my_dev_id,1);
-   printk(KERN_INFO "Driver removed\n");
+   	cdev_del(my_cdev);
+   	device_destroy(my_class, my_dev_id);
+   	class_destroy(my_class);
+   	unregister_chrdev_region(my_dev_id,1);
+   	printk(KERN_INFO "Driver removed\n");
 }
 
 module_init(stred_init);
