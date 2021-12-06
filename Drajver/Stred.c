@@ -9,6 +9,8 @@
 #include <linux/kdev_t.h>
 #include <linux/uaccess.h>
 #include <linux/errno.h>
+#include <linux/wait.h>
+#include <linux/semaphore.h>
 #define STRING_SIZE 100
 #define PRIJEMNI_BUFF 200
 
@@ -21,6 +23,7 @@ static struct cdev *my_cdev;
 
 DECLARE_WAIT_QUEUE_HEAD(readQ);
 DECLARE_WAIT_QUEUE_HEAD(writeQ);
+struct semaphore sem;
 
 char string[STRING_SIZE+1];
 int size = 0; //koliko clanova se trenutno nalazi u nizu
@@ -117,14 +120,25 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		char *ps = buff + 7;
 		int new_size = strlen(ps);
 		
-		if(wait_event_interruptible(writeQ,(size + new_size <= 100)))
+		if(down_interruptible(&sem))
 			return -ERESTARTSYS;
+		while(size + new_size > 100)
+		{
+			up(&sem);
+			if(wait_event_interruptible(writeQ,(size + new_size <= 100)))
+				return -ERESTARTSYS;
+			if(down_interruptible(&sem))
+				return -ERESTARTSYS;
+		}		
+	//	if(wait_event_interruptible(writeQ,(size + new_size <= 100)))
+	//		return -ERESTARTSYS;
 
 		strcat(string, ps);
 		printk(KERN_WARNING "Novi string je sad: %s\n", string );
 
 		size = strlen(string);
-
+		
+		up(&sem);
 		wake_up_interruptible(&readQ);
 
 	}
@@ -240,6 +254,8 @@ static int __init stred_init(void)
    for (i = 0; i < STRING_SIZE; i++)
 	   string[i] = 0;
 
+   //Inicijalizacija semafora
+   sema_init(&sem,1);
 
    ret = alloc_chrdev_region(&my_dev_id, 0, 1, "stred");
    if (ret){
