@@ -211,19 +211,22 @@ ssize_t stred_write(struct file *pfile, const char __user *buffer, size_t length
 		
 		duzina_br = strlen(ps);
 
-			found = strstr(string, ps);
+			found = strstr(string, ps); //pokazuje na prvu pojavu ps-a
 			if (found)
 			{
 				while(found)
 				{
-					strncpy(found, found + duzina_br, strlen(found) - duzina_br); 
-					found = strstr(string, ps);
+					strncpy(found, found + duzina_br, strlen(found) - duzina_br);
+				        //na mestu gde se pojavljuje ta rec, prekopira se 
+					//ostatak strings 
+					
 					for (j = 1; j <= duzina_br; j++)
-						string[strlen(string)-1] = 0;
+						string[strlen(string)-1] = 0;  //postavi nule na mesta koja su obrisana
 					printk(KERN_WARNING "Izbrisan string %s iz pocetnog, sada je: %s\n",ps, string);
 					broj_brisanja++;
+					found = strstr(string, ps);  //trazi se sledeca pojava stringa ps
 				}
-				printk(KERN_WARNING "Uspesno obrisano. Novi string je: %s\n", string);
+			printk(KERN_WARNING "Uspesno obrisano. Novi string je: %s\n", string);
 		
 			size = size - duzina_br * broj_brisanja;
 
