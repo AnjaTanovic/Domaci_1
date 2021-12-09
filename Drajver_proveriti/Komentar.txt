@@ -1,0 +1,12 @@
+U ovom fajlu su dodati semafori za funkcije string=, remove=, shrink, clear i truncate (u glavnom Drajver folderu je semafor samo za append= ).
+Nisam stavljala da proveravaju nikakav uslov pa da se uspavljuju vec samo kad se udje u deo koji radi nesto sa stringom da se umanji semafor i kad zavrsi da se poveca, posto mi je to imalo smisla za ove funkcije, ne znam da li je to okej?
+
+Oznaceni su dodatni delovi sa:
+// DODATNI DEO ZA SEMAFORE
+
+
+//KRAJ DODATNOG DELA
+
+*semafor za append je komentarisan samo sa //SEMAFORI KOD APPEND
+
+I kako mogu da istestiram ove semafore da li rade okej? Za append= sam radila sa pozivanjem echo sa &, pa sam videla da li radi ili ne, ali ove nemaju razlog da se uspavljuju (bar mislim) pa ne znam kako da napisem paralelno procese za 2 remove= npr
