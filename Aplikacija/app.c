@@ -17,7 +17,8 @@ int main ()
 		printf("5: Izbriši vodeće i prateće space karaktere\n");
 		printf("6: Izbriši izraz iz stringa\n");
 		printf("7: Izbriši poslednjih n karaktera iz stringa\n");
-
+		printf("Za izlaz iz aplikacije unesite Q\n");
+		
 		size_t num_b = 1;
 		option = (char*) malloc(num_b+1);
 		getline(&option,&num_b, stdin);
@@ -43,7 +44,7 @@ int main ()
 					return -1;
 				}
 			
-				printf("%s",str);	
+				printf("%s\n",str);	
 				free(str);
 				
 				break;
@@ -58,10 +59,31 @@ int main ()
 				printf("String koji zelite da unesete: ");
 				
 				str = (char *)malloc(num_of_bytes+1);
-				scanf("\n");
-				scanf("%[^\n]%*c", str);
+				
+				//Sledeci deo je zato sto prazne karaktere ne prihvata na pocetku vec ih ignorise, pa ovako da prebroji
+				//na pocetku koliko ih ima
+				int i = 0;
+				int prazni = 0;
+				char *prazni_deo;
+				char x;
+				while (i==0)   //broji ' ' unesene
+				{
+					x = getchar();
+					if (x == ' ')
+						prazni++;
+					else
+						i = 1;
+				}
+				scanf("%[^\n]", str); //ucita ostatak stringa
+				getchar(); //prezume \n koji je ostao
 
-				fprintf(fp,"string=%s\n", str);
+				for (i = 0; i < prazni; i++) //pravi string praznih karaktera za pocetak
+				{
+					prazni_deo[i] = ' ';
+				}	
+				prazni_deo[i] = '\0';
+
+				fprintf(fp,"string=%s%c%s\n",prazni_deo, x, str);  //unosi broj praznih karaktera, zatim x (prvi karaker koji je ucitao), i na kraju ostatak stringa
 
 				if(fclose(fp))
 				{
@@ -82,10 +104,31 @@ int main ()
 				printf("String koji zelite da konkatanirate: ");
 				
 				str = (char *)malloc(num_of_bytes+1);		
-				scanf("\n");
-				scanf("%[^\n]%*c", str);
-		
-				fprintf(fp,"append=%s\n", str);
+				
+				//Sledeci deo je zato sto prazne karaktere ne prihvata na pocetku vec ih ignorise, pa ovako da prebroji
+				//na pocetku koliko ih ima
+				int j = 0;
+				int prazni_append = 0;
+				char *prazni_deo_append;
+				char x_append;
+				while (j==0)   //broji ' ' unesene
+				{
+					x_append = getchar();
+					if (x_append == ' ')
+						prazni_append++;
+					else
+						j = 1;
+				}
+
+				scanf("%[^\n]", str); //ucita ostatak stringa
+				getchar();				
+				for (j = 0; j < prazni_append; j++) //pravi string praznih karaktera za pocetak
+				{
+					prazni_deo_append[j] = ' ';
+				}	
+				prazni_deo_append[j] = '\0';
+
+				fprintf(fp,"append=%s%c%s\n",prazni_deo_append, x_append, str);  //unosi broj praznih karaktera, zatim x (prvi karaker koji je ucitao), i na kraju ostatak stringa
 
 				if(fclose(fp))
 				{
