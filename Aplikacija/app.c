@@ -228,6 +228,7 @@ int main ()
 				break;
 		}
 
+		free(option);
 	}
 
 	return 0;
